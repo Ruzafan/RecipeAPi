@@ -20,7 +20,7 @@ func handleRequests() {
 	r.GET("/", homePage)
 	r.GET("/recipes", returnAllRecipes)
 	r.GET("/recipe/:id", returnRecipe)
-	log.Fatal(r.Run(":8080"))
+	log.Fatal(r.Run())
 }
 
 func main() {

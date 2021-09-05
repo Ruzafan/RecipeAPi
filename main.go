@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,14 +19,13 @@ func handleRequests() {
 	r := gin.Default()
 	r.GET("/", homePage)
 	r.GET("/recipes", returnAllRecipes)
-	log.Fatal(r.Run())
+	r.GET("/recipe/:id", returnRecipe)
+	log.Fatal(r.Run(":8080"))
 }
 
 func main() {
 	fmt.Println("Rest API v1 - Gin Router")
-	Recipes = []Recipe{
-		Recipe{Id: "1", Name: "Oreo cupcake", Image: "https://www.recetin.com/wp-content/uploads/2014/01/cupcakes__oreo.jpg"},
-	}
+	getRecipes()
 	handleRequests()
 }
 
@@ -38,4 +40,32 @@ var Recipes []Recipe
 func returnAllRecipes(c *gin.Context) {
 	fmt.Println("Endpoint Hit: returnAllRecipes")
 	c.JSON(200, Recipes)
+}
+
+func returnRecipe(c *gin.Context) {
+	fmt.Println("Endpoint Hit: return recipe")
+	id := c.Param("id")
+	var recipe Recipe = Recipe{}
+	for i := 0; i < len(Recipes); i++ {
+		if Recipes[i].Id == id {
+			recipe = Recipes[i]
+			break
+		}
+	}
+	if (recipe == Recipe{}) {
+		c.JSON(404, "Not found")
+	} else {
+		c.JSON(200, recipe)
+	}
+}
+
+func getRecipes() {
+	jsonFile, err := os.Open("recipes.json")
+	if err != nil {
+		fmt.Println("File reading error", err)
+		return
+	}
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal(byteValue, &Recipes)
 }

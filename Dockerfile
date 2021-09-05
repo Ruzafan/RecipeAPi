@@ -8,5 +8,6 @@ FROM alpine
 RUN adduser -S -D -H -h /app appuser
 USER appuser
 COPY --from=builder /build/recipeapi /app/
+COPY --from=builder /build/recipes.json /app/
 WORKDIR /app
 CMD ["./recipeapi"]

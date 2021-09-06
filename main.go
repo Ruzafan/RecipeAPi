@@ -1,13 +1,18 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func homePage(c *gin.Context) {
@@ -20,7 +25,7 @@ func handleRequests() {
 	r.GET("/", homePage)
 	r.GET("/recipes", returnAllRecipes)
 	r.GET("/recipe/:id", returnRecipe)
-	log.Fatal(r.Run())
+	log.Fatal(r.Run(":8080"))
 }
 
 func main() {
@@ -38,6 +43,28 @@ type Recipe struct {
 var Recipes []Recipe
 
 func returnAllRecipes(c *gin.Context) {
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://recipe-user:123456lyon@cluster0.j2fpf.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	collection := client.Database("Recipes").Collection("Recipes")
+	cur, currErr := collection.Find(ctx, bson.D{})
+
+	if currErr != nil {
+		panic(currErr)
+	}
+	defer cur.Close(ctx)
+
+	if err = cur.All(ctx, &Recipes); err != nil {
+		panic(err)
+	}
+	defer client.Disconnect(ctx)
+
 	fmt.Println("Endpoint Hit: returnAllRecipes")
 	c.JSON(200, Recipes)
 }

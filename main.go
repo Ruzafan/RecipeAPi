@@ -1,18 +1,10 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func homePage(c *gin.Context) {
@@ -25,12 +17,12 @@ func handleRequests() {
 	r.GET("/", homePage)
 	r.GET("/recipes", returnAllRecipes)
 	r.GET("/recipe/:id", returnRecipe)
+	r.POST("/recipe/add", setRecipe)
 	log.Fatal(r.Run())
 }
 
 func main() {
 	fmt.Println("Rest API v1 - Gin Router")
-	getRecipes()
 	handleRequests()
 }
 
@@ -40,45 +32,16 @@ type Recipe struct {
 	Image string `json:"image"`
 }
 
-var Recipes []Recipe
-
 func returnAllRecipes(c *gin.Context) {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://recipe-user:123456lyon@cluster0.j2fpf.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	collection := client.Database("Recipes").Collection("Recipes")
-	cur, currErr := collection.Find(ctx, bson.D{})
-
-	if currErr != nil {
-		panic(currErr)
-	}
-	defer cur.Close(ctx)
-
-	if err = cur.All(ctx, &Recipes); err != nil {
-		panic(err)
-	}
-	defer client.Disconnect(ctx)
-
+	recipes := getAllRecipes()
 	fmt.Println("Endpoint Hit: returnAllRecipes")
-	c.JSON(200, Recipes)
+	c.JSON(200, recipes)
 }
 
 func returnRecipe(c *gin.Context) {
 	fmt.Println("Endpoint Hit: return recipe")
 	id := c.Param("id")
-	var recipe Recipe = Recipe{}
-	for i := 0; i < len(Recipes); i++ {
-		if Recipes[i].Id == id {
-			recipe = Recipes[i]
-			break
-		}
-	}
+	recipe := getRecipe(id)
 	if (recipe == Recipe{}) {
 		c.JSON(404, "Not found")
 	} else {
@@ -86,13 +49,10 @@ func returnRecipe(c *gin.Context) {
 	}
 }
 
-func getRecipes() {
-	jsonFile, err := os.Open("recipes.json")
-	if err != nil {
-		fmt.Println("File reading error", err)
-		return
-	}
-	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	json.Unmarshal(byteValue, &Recipes)
+func setRecipe(c *gin.Context) {
+	var recipe Recipe = Recipe{}
+	recipe.Id = c.PostForm("Id")
+	recipe.Name = c.PostForm("Name")
+	recipe.Image = c.PostForm("Image")
+
 }

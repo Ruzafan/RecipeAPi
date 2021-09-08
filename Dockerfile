@@ -1,6 +1,6 @@
 FROM golang:1.14.9-alpine AS builder
 RUN mkdir /build
-ADD go.mod go.sum main.go recipes.json /build/
+ADD go.mod go.sum main.go mongo.go recipes.json /build/
 WORKDIR /build
 RUN go build -o recipeapi
 

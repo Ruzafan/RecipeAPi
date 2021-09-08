@@ -19,7 +19,7 @@ func handleRequests() {
 	r.GET("/recipes", returnAllRecipes)
 	r.GET("/recipe/:id", returnRecipe)
 	r.POST("/recipe/add", setRecipe)
-	log.Fatal(r.Run(":3030"))
+	log.Fatal(r.Run())
 }
 
 func main() {

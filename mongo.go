@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func getCollection(collectionName string) (*mongo.Collection, context.Context) {
+func getCollection(collectionName string) (*mongo.Collection, context.Context, *mongo.Client) {
 	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://recipe-user:123456lyon@cluster0.j2fpf.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"))
 	if err != nil {
 		log.Fatal(err)
@@ -20,32 +21,62 @@ func getCollection(collectionName string) (*mongo.Collection, context.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Disconnect(ctx)
 	collection := client.Database("Recipes").Collection(collectionName)
-	return collection, ctx
+	return collection, ctx, client
 }
 
 func getAllRecipes() []Recipe {
 	var recipes []Recipe = []Recipe{}
-	collection, ctx := getCollection("Recipes")
+	collection, ctx, client := getCollection("Recipes")
 	cur, currErr := collection.Find(ctx, bson.D{})
 
 	if currErr != nil {
 		panic(currErr)
 	}
 	defer cur.Close(ctx)
+	defer client.Disconnect(ctx)
 	if err := cur.All(ctx, &recipes); err != nil {
 		panic(err)
 	}
+	fmt.Println(getMaxId())
 	return recipes
 }
 
-func getRecipe(id string) Recipe {
+func getRecipe(id int64) Recipe {
 	var recipe Recipe = Recipe{}
-	collection, ctx := getCollection("Recipes")
+	collection, ctx, client := getCollection("Recipes")
 	err := collection.FindOne(ctx, bson.M{"Id": id}).Decode(&recipe)
+	defer client.Disconnect(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return recipe
+}
+
+func saveRecipe(recipe Recipe) {
+	collection, ctx, client := getCollection("Recipes")
+	res, err := collection.InsertOne(ctx, recipe)
+	defer client.Disconnect(ctx)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(res)
+}
+func getMaxId() int64 {
+	collection, ctx, client := getCollection("Recipes")
+	options := options.Find()
+	options.SetSort(bson.D{{"Id", -1}})
+	options.SetLimit(1)
+	cur, currErr := collection.Find(ctx, bson.M{}, options)
+	if currErr != nil {
+		panic(currErr)
+	}
+	defer cur.Close(ctx)
+	defer client.Disconnect(ctx)
+	var recipes []Recipe = []Recipe{}
+	if err := cur.All(ctx, &recipes); err != nil {
+		panic(err)
+	}
+	fmt.Println(recipes)
+	return recipes[0].Id
 }

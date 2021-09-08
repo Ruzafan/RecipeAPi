@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +19,7 @@ func handleRequests() {
 	r.GET("/recipes", returnAllRecipes)
 	r.GET("/recipe/:id", returnRecipe)
 	r.POST("/recipe/add", setRecipe)
-	log.Fatal(r.Run())
+	log.Fatal(r.Run(":3030"))
 }
 
 func main() {
@@ -27,7 +28,7 @@ func main() {
 }
 
 type Recipe struct {
-	Id    string `json:"id"`
+	Id    int64  `json:"id"`
 	Name  string `json:"name"`
 	Image string `json:"image"`
 }
@@ -40,7 +41,11 @@ func returnAllRecipes(c *gin.Context) {
 
 func returnRecipe(c *gin.Context) {
 	fmt.Println("Endpoint Hit: return recipe")
-	id := c.Param("id")
+	i, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err == nil {
+		fmt.Println(err)
+	}
+	id := i
 	recipe := getRecipe(id)
 	if (recipe == Recipe{}) {
 		c.JSON(404, "Not found")
@@ -51,8 +56,7 @@ func returnRecipe(c *gin.Context) {
 
 func setRecipe(c *gin.Context) {
 	var recipe Recipe = Recipe{}
-	recipe.Id = c.PostForm("Id")
-	recipe.Name = c.PostForm("Name")
-	recipe.Image = c.PostForm("Image")
-
+	c.BindJSON(&recipe)
+	recipe.Id = getMaxId() + 1
+	saveRecipe(recipe)
 }

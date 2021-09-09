@@ -45,8 +45,7 @@ func returnRecipe(c *gin.Context) {
 	if err == nil {
 		fmt.Println(err)
 	}
-	id := i
-	recipe := getRecipe(id)
+	recipe := getRecipe(i)
 	if (recipe == Recipe{}) {
 		c.JSON(404, "Not found")
 	} else {

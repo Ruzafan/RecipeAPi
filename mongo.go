@@ -45,7 +45,7 @@ func getAllRecipes() []Recipe {
 func getRecipe(id int64) Recipe {
 	var recipe Recipe = Recipe{}
 	collection, ctx, client := getCollection("Recipes")
-	err := collection.FindOne(ctx, bson.M{"Id": id}).Decode(&recipe)
+	err := collection.FindOne(ctx, bson.M{"id": id}).Decode(&recipe)
 	defer client.Disconnect(ctx)
 	if err != nil {
 		panic(err)

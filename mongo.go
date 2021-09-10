@@ -65,7 +65,7 @@ func saveRecipe(recipe Recipe) {
 func getMaxId() int64 {
 	collection, ctx, client := getCollection("Recipes")
 	options := options.Find()
-	options.SetSort(bson.D{{"Id", -1}})
+	options.SetSort(bson.D{{"id", -1}})
 	options.SetLimit(1)
 	cur, currErr := collection.Find(ctx, bson.M{}, options)
 	if currErr != nil {

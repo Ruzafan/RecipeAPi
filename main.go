@@ -58,4 +58,5 @@ func setRecipe(c *gin.Context) {
 	c.BindJSON(&recipe)
 	recipe.Id = getMaxId() + 1
 	saveRecipe(recipe)
+	c.JSON(201, recipe)
 }

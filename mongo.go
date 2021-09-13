@@ -38,7 +38,6 @@ func getAllRecipes() []Recipe {
 	if err := cur.All(ctx, &recipes); err != nil {
 		panic(err)
 	}
-	fmt.Println(getMaxId())
 	return recipes
 }
 
@@ -51,6 +50,23 @@ func getRecipe(id int64) Recipe {
 		panic(err)
 	}
 	return recipe
+}
+
+func getRecipeByName(name string) []Recipe {
+	var recipes []Recipe = []Recipe{}
+	collection, ctx, client := getCollection("Recipes")
+	filter := bson.M{"name": bson.M{"$regex": name, "$options": "im"}}
+	cur, currErr := collection.Find(ctx, filter)
+
+	if currErr != nil {
+		panic(currErr)
+	}
+	defer cur.Close(ctx)
+	defer client.Disconnect(ctx)
+	if err := cur.All(ctx, &recipes); err != nil {
+		panic(err)
+	}
+	return recipes
 }
 
 func saveRecipe(recipe Recipe) {

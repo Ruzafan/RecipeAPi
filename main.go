@@ -18,6 +18,7 @@ func handleRequests() {
 	r.GET("/", homePage)
 	r.GET("/recipes", returnAllRecipes)
 	r.GET("/recipe/:id", returnRecipe)
+	r.GET("/recipe/find/:name", findRecipe)
 	r.POST("/recipe/add", setRecipe)
 	log.Fatal(r.Run())
 }
@@ -51,6 +52,13 @@ func returnRecipe(c *gin.Context) {
 	} else {
 		c.JSON(200, recipe)
 	}
+}
+
+func findRecipe(c *gin.Context) {
+	fmt.Println("Endpoint Hit: return recipe")
+	name := c.Param("name")
+	recipes := getRecipeByName(name)
+	c.JSON(200, recipes)
 }
 
 func setRecipe(c *gin.Context) {
